@@ -65,7 +65,7 @@ export default function AdminLayout() {
           <Space>
             <Button
               icon={<SwapOutlined />}
-              onClick={() => window.open('#/student/chat', '_blank')}
+              onClick={() => window.open('#/student/chat?as=stu001', '_blank')}
             >
               打开学生端
             </Button>

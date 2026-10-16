@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { MOCK_STUDENTS, MOCK_ADMINS } from '../types';
 import type { KbDoc, Notice, ChatMessage, Ticket, QaLog, MockUser } from '../types';
 import { SEED_DOCS, SEED_NOTICES, SEED_TICKETS, SEED_QALOGS } from '../data/seed';
 
@@ -29,21 +30,29 @@ function freshSeed(): DemoData {
     lastBootAt: Date.now(),
   };
 }
+const IDENTITY_KEY = 'txzs_identity';
+function initialUser(): MockUser | null {
+  const params = new URLSearchParams(window.location.hash.split('?')[1] ?? '');
+  const id = params.get('as') ?? sessionStorage.getItem(IDENTITY_KEY);
+  const user = [...MOCK_STUDENTS, ...MOCK_ADMINS].find((item) => item.id === id) ?? null;
+  if (user) sessionStorage.setItem(IDENTITY_KEY, user.id);
+  return user;
+}
 export const STORAGE_KEY = 'txzs_tuanxue';
 export const useStore = create<TxzsState>()(
   persist(
     (set) => ({
       ...freshSeed(),
-      currentUser: null,
-      login: (user) => set({ currentUser: user }),
-      logout: () => set({ currentUser: null }),
+      currentUser: initialUser(),
+      login: (user) => { sessionStorage.setItem(IDENTITY_KEY, user.id); set({ currentUser: user }); },
+      logout: () => { sessionStorage.removeItem(IDENTITY_KEY); set({ currentUser: null }); },
       resetDemoData: () => set(freshSeed()),
     }),
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
       version: 1,
-      // 身份仅在窗口内保存，防止学生端与管理端互相覆盖身份。
+      // 身份用 sessionStorage 按标签页保存，业务数据跨窗口共享。
       partialize: ({ docs, notices, chats, tickets, qaLogs, answerMode, lastBootAt }) =>
         ({ docs, notices, chats, tickets, qaLogs, answerMode, lastBootAt }),
     },

@@ -45,3 +45,13 @@ localStorage.setItem('txzs_tuanxue', JSON.stringify(data));
 - Vite 提示单个 JS 包超过 500 kB（约 839 kB，gzip 272 kB），为非阻断警告；当前构建成功。
 - 按代码审查技能检查了范围、类型、未使用代码与数据同步逻辑；没有项目 lint 脚本，使用 TypeScript strict 和浏览器验收。
 - 仓库没有 API Key；PLAN.md 经逐字节比较与附件一致。
+
+## step1-fix：审核修复
+
+- 锁文件下载地址全部改为官方 HTTPS registry，integrity 保持不变，不提交 .npmrc。
+- 学生容器独立使用 100vh / 100dvh，shell 撑满高度，body min-height:0 并内部滚动。
+- 身份存 sessionStorage，刷新保留；URL 的 as 参数优先于复制来的会话身份，管理端按钮直达张同学。
+- 修正团员档案条文和 tk-005 的人工原因。原第 1 步“刷新需重新选身份”的限制已解除。
+- 演示直达链接（端口以启动输出为准）：学生 http://localhost:5173/#/student/chat?as=stu001 ，管理 http://localhost:5173/#/admin/dashboard?as=admin_wang 。
+- 验证：删除 node_modules 后 npm ci，npm run build；锁文件 tencentyun 计数 0；Chromium 验证 375×740 底栏贴底、长内容仅中间滚动、两个身份刷新保留、打开学生端参数覆盖复制身份。
+- 范围：仅审核修复，业务页面仍为占位。
