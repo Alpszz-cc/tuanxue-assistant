@@ -5,7 +5,7 @@ import { useStore } from '../../store';
 const { Title, Paragraph, Text } = Typography;
 
 /**
- * 设置页（第 10 节第 1 步）：先实现「重置全部演示数据」。
+ * 设置页：保留离线演示说明与数据重置。
  * 问答模式切换与「测试连接」在第 5 步（接入 Hermes）时实现。
  */
 export default function Settings() {
@@ -21,7 +21,7 @@ export default function Settings() {
         <Alert
           type="info"
           showIcon
-          message={`当前模式：${
+          title={`当前模式：${
             answerMode === 'offline' ? '离线演示模式（本地检索 + 模板回答）' : 'Hermes 模式（调用本地智能体）'
           }`}
           description="模式切换与「测试连接」将在第 5 步接入 Hermes API Server 时开放。答辩现场建议使用离线模式，稳定不依赖网络。"

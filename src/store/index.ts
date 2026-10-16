@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { MOCK_STUDENTS, MOCK_ADMINS } from '../types';
 import type { KbDoc, Notice, ChatMessage, Ticket, QaLog, MockUser } from '../types';
+import { ticketDocument } from '../lib/admin';
 import type { AnswerResult } from '../lib/answerEngine';
 import { SEED_DOCS, SEED_NOTICES, SEED_TICKETS, SEED_QALOGS } from '../data/seed';
 
@@ -25,6 +26,13 @@ interface TxzsState extends DemoData {
   feedback: (studentId: string, messageId: string, value: 'up' | 'down') => void;
   markNoticeRead: (noticeId: string, studentId: string) => void;
   markTicketSeen: (ticketId: string, studentId: string) => void;
+  addDoc: (doc: KbDoc) => void;
+  removeDoc: (id: string) => void;
+  restoreSeedDocs: () => void;
+  publishNotice: (notice: Notice) => void;
+  replyTicket: (id: string, reply: string, repliedBy: string) => void;
+  closeTicket: (id: string) => void;
+  addDocFromTicket: (id: string) => void;
 }
 function freshSeed(): DemoData {
   return {
@@ -54,6 +62,19 @@ export const useStore = create<TxzsState>()(
       login: (user) => { sessionStorage.setItem(IDENTITY_KEY, user.id); set({ currentUser: user }); },
       logout: () => { sessionStorage.removeItem(IDENTITY_KEY); set({ currentUser: null }); },
       resetDemoData: () => set(freshSeed()),
+      addDoc: (doc) => set((state) => ({ docs: [doc, ...state.docs] })),
+      removeDoc: (id) => set((state) => ({ docs: state.docs.filter((doc) => doc.id !== id) })),
+      restoreSeedDocs: () => set((state) => ({ docs: [...structuredClone(SEED_DOCS), ...state.docs.filter((doc) => doc.source !== 'seed')] })),
+      publishNotice: (notice) => set((state) => ({ notices: [notice, ...state.notices] })),
+      replyTicket: (id, reply, repliedBy) => set((state) => ({ tickets: state.tickets.map((ticket) => ticket.id === id
+        ? { ...ticket, reply, repliedBy, repliedAt: Date.now(), status: '已回复', studentSeen: false } : ticket) })),
+      closeTicket: (id) => set((state) => ({ tickets: state.tickets.map((ticket) => ticket.id === id ? { ...ticket, status: '已关闭' } : ticket) })),
+      addDocFromTicket: (id) => {
+        const ticket = get().tickets.find((item) => item.id === id);
+        if (!ticket?.reply || ticket.addedToKb) return;
+        const doc = ticketDocument(ticket);
+        set((state) => ({ docs: [doc, ...state.docs], tickets: state.tickets.map((item) => item.id === id ? { ...item, addedToKb: true } : item) }));
+      },
       addQuestion: (studentId, message) => set((state) => ({ chats: { ...state.chats,
         [studentId]: [...(state.chats[studentId] ?? []), message] } })),
       finishAnswer: (student, question, reply) => {

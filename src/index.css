@@ -58,3 +58,9 @@ body {
 
 .answer-footer .ant-actions-list { flex-wrap: wrap; gap: 2px; }
 .source-excerpt { padding: 10px 0; font-size: 12px; }
+
+.urgent-row > td { background: #fff1f0 !important; border-bottom-color: #ffa39e !important; }
+.top-question { display: flex; gap: 8px; align-items: center; margin: 16px 0; }
+.top-question > span:nth-child(2) { flex: 1; }
+.table-title { white-space: normal; height: auto; padding: 0; text-align: left; }
+.notice-form-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
