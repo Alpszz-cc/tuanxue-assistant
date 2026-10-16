@@ -28,15 +28,25 @@ export function answerOffline({ question, docs }: AnswerRequest): AnswerResult {
   if (/不想活|自杀|自残|伤害自己|活不下去|想死|崩溃|撑不下去|很绝望|情绪困扰/.test(question)) {
     return result('听起来你现在很难受，谢谢你愿意说出来。请先到安全的地方，找信任的人陪着你，并联系辅导员（联系方式：示例）或心理中心（联系方式：示例）。我会将情况转交老师，请尽快寻求身边人的帮助。[[ESCALATE:疑似紧急]]', category);
   }
-  if (/我的.*(为什么|为何|扣分|没通过|不通过|比.*低)|扣分|投诉|审批|批准|申诉/.test(question)) {
+  if (/投诉/.test(question) || (/我/.test(question) && /为什么|为何|没通过|不通过|被扣|扣了|算错|比.*低/.test(question))) {
     const process = retrieve(category === '奖助申请' ? '评定申请公示申诉' : '综测评议公示申诉', docs.filter((doc) => doc.category === category))
       .find((hit) => hit.score >= 0.3 && /公示/.test(hit.snippet));
     const general = process ? `一般流程：${process.snippet.replace(/^第[^条]+条\s*/, '')}\n依据：《${process.title}》${process.snippet.match(/^第[^条]+条/)?.[0] ?? ''}` : '一般流程：先核对本人提交材料，并向负责老师提出核实申请；现有资料未说明具体办理细节。';
     return result(`${general}\n你的具体情况需要老师核实，已为你转交。[[ESCALATE:需人工核实]]`, category, process ? [process] : []);
   }
   const hits = retrieve(question, docs);
-  const first = hits[0];
-  if (!first || first.score < 0.36) {
+  let first = hits[0];
+  // 高置信 FAQ 可提供语料内的查询扩展；只有制度文本充分支持时才优先引制度。
+  // 不扩展老师沉淀的 FAQ，避免覆盖老师针对该问题的明确回复。
+  if (first?.score >= 0.8 && first.snippet.startsWith('问：') && docs.find((doc) => doc.id === first.docId)?.source !== 'ticket') {
+    const clarification = first.snippet.split('答：')[1];
+    if (clarification) {
+      const policies = docs.filter((doc) => splitDoc(doc).some((text) => /^第[^条]+条/.test(text)));
+      const grounded = retrieve(`${question} ${clarification}`, policies)[0];
+      if (grounded?.score >= 0.5) first = grounded;
+    }
+  }
+  if (!first || first.score < 0.40) {
     return result('制度资料里暂时没有这方面的明确规定，已转交老师/学生会为你解答。[[ESCALATE:AI无法解答]]', category);
   }
   let selected = [first];
@@ -47,9 +57,9 @@ export function answerOffline({ question, docs }: AnswerRequest): AnswerResult {
       .map((snippet) => ({ ...first, snippet }));
   }
   const sources = selected.map(({ docId, title, snippet }) => ({ docId, title, snippet }));
-  const body = selected.map((hit) => hit.snippet.replace(/^第[^条]+条\s*/, '')).join('\n');
+  const body = selected.map((hit) => hit.snippet.replace(/^第[^条]+条\s*/, '').replace(/^问：[^\n]+\n答：/, '')).join('\n');
   const clauses = selected.map((hit) => hit.snippet.match(/^第[^条]+条/)?.[0]).filter(Boolean).join('、');
-  const citation = `依据：《${first.title}》${clauses || '常见问题'}`;
+  const citation = `依据：《${first.title}》${clauses || first.snippet.match(/^问：([^\n]+)/)?.[1] || '资料片段'}`;
   // 给出处预留长度，确保即使上传长段落也不超过 250 字。
   const maxBody = Math.max(0, 249 - citation.length - 1);
   const concise = body.length > maxBody ? body.slice(0, maxBody - 1) + '…' : body;
