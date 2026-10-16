@@ -1,0 +1,30 @@
+{
+  "name": "tuanxue-assistant",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "学院团学事务助手 · 网页 Demo（基于开源 Hermes 智能体）",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.3.4",
+    "@ant-design/x": "^2.9.0",
+    "antd": "^6.6.6",
+    "mammoth": "^1.13.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router": "^6.30.6",
+    "react-router-dom": "^6.30.6",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "~5.9.3",
+    "vite": "^6.4.4"
+  }
+}

@@ -28,3 +28,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# TypeScript 构建缓存
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
