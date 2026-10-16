@@ -10,7 +10,7 @@ hermes profile create --help
 hermes config set --help
 ```
 
-确认支持 `--clone`、`-p tuanxue`、`skills opt-out`，以及 `config set` 对 API_SERVER_* 和 JSON 工具集列表的处理。要求最终 `platform_toolsets.api_server` 为列表 `["skills"]`，且 API 服务只监听 `127.0.0.1:8643`。
+确认支持 `--clone`、`-p tuanxue`、`skills opt-out`，以及 `config set` 对 API_SERVER_* 和 JSON 工具集列表的处理。要求最终 `platform_toolsets.api_server` 为列表 `["skills"]`，且 API 服务只监听 `127.0.0.1:8650`。
 
 ## 2. 生成并核对参考资料
 
@@ -41,10 +41,10 @@ bash hermes/setup.sh
 setup 只打印下列命令，不启动网关或发送请求：
 
 ```sh
-nohup hermes -p tuanxue gateway > "$HOME/tuanxue-gateway.log" 2>&1 &
-curl -fsS http://127.0.0.1:8643/health
+nohup hermes -p tuanxue gateway run > "$HOME/tuanxue-gateway.log" 2>&1 &
+curl -fsS http://127.0.0.1:8650/health
 set -a; . ./.env.local; set +a
-curl -fsS -H "Authorization: Bearer ${HERMES_API_KEY}" http://127.0.0.1:8643/v1/models
+curl -fsS -H "Authorization: Bearer ${HERMES_API_KEY}" http://127.0.0.1:8650/v1/models
 ```
 
 核对 `/v1/models` 返回的实际模型 id；如与 `tuanxue` 不同，更新 `.env.local` 的 `HERMES_MODEL`。查看日志时先检查是否含凭据再对外分享。
@@ -52,7 +52,7 @@ curl -fsS -H "Authorization: Bearer ${HERMES_API_KEY}" http://127.0.0.1:8643/v1/
 之后手动验证 chat completions：
 
 ```sh
-curl -fsS http://127.0.0.1:8643/v1/chat/completions \
+curl -fsS http://127.0.0.1:8650/v1/chat/completions \
   -H "Authorization: Bearer ${HERMES_API_KEY}" \
   -H 'Content-Type: application/json' \
   -d "{\"model\":\"${HERMES_MODEL}\",\"messages\":[{\"role\":\"user\",\"content\":\"请先加载 tuanxue-assistant 技能：志愿服务在综测里怎么加分？\"}]}"
@@ -61,3 +61,5 @@ curl -fsS http://127.0.0.1:8643/v1/chat/completions \
 预期引用综测细则第二条。将提问换为“图书馆几点关门”，预期末尾有 `[[ESCALATE:AI无法解答]]`。若服务、工具集或模型 id 的格式与当前版本不一致，先修正对应配置后再继续；本交付没有声称这些运行验收已通过。
 
 前端代理、流式请求和 Hermes 降级属于第 5 步，当前网页仍使用离线模式。
+
+setup.sh 必须在真实的 SSH 终端里运行，不能在 Codex 沙箱里运行。可用 `HERMES_BIN=/绝对路径/hermes bash hermes/setup.sh` 指定入口。

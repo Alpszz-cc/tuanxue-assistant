@@ -16,6 +16,12 @@ const EMPTY: ChatMessage[] = [];
 export default function Chat() {
   const student = useStore((s) => s.currentUser)!;
   const chats = useStore((s) => s.chats[student.id] ?? EMPTY);
+  const mode = useStore((s) => s.answerMode);
+  const [streamText, setStreamText] = useState('');
+  const [requesting, setRequesting] = useState(false);
+  const [progress, setProgress] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => () => controller.current?.abort(), []);
   const [value, setValue] = useState('');
   const [pendingId, setPendingId] = useState<string | null>(null);
   const busy = useRef(false);
@@ -33,16 +39,21 @@ export default function Chat() {
     if (!question || busy.current) return;
     busy.current = true;
     setValue('');
+    setStreamText(''); setProgress(false); setRequesting(true);
+    controller.current = new AbortController();
     try {
       const store = useStore.getState();
       store.addQuestion(student.id, { id: crypto.randomUUID(), role: 'user', content: question, createdAt: Date.now() });
-      const reply = await answer({ question, docs: store.docs, mode: 'offline' });
+      const reply = await answer({ question, docs: store.docs, mode, history: store.chats[student.id], signal: controller.current.signal,
+        onToken: (text) => { setStreamText((previous) => previous + text); scrollToBottom(); }, onProgress: () => setProgress(true) });
       const id = useStore.getState().finishAnswer(student, question, reply);
-      setPendingId(id);
+      setPendingId(mode === 'offline' || reply.offlineFallback ? id : null);
+      if (mode === 'hermes' && !reply.offlineFallback) busy.current = false;
     } catch {
+      if (controller.current?.signal.aborted) { busy.current = false; return; }
       message.error('本次回答未能保存，请检查浏览器存储后重试。');
       busy.current = false;
-    }
+    } finally { setRequesting(false); setStreamText(''); setProgress(false); }
   };
   const finishTyping = (id: string) => {
     if (pendingId === id) { setPendingId(null); busy.current = false; scrollToBottom(); }
@@ -56,11 +67,11 @@ export default function Chat() {
   return (
     <div className="chat-page">
       <div className="student-heading"><div><Typography.Title level={4}>团学问答</Typography.Title>
-        <Typography.Text type="secondary">{student.name}，有问题随时问</Typography.Text></div><Tag color="red">离线演示</Tag></div>
+        <Typography.Text type="secondary">{student.name}，有问题随时问</Typography.Text></div><Tag color="red">{mode === 'hermes' ? '智能体' : '离线演示'}</Tag></div>
       <Welcome icon={<RobotOutlined />} title="你好，我是团学事务助手" description="依据学院制度解答，附上资料出处；需要核实的问题交给老师。当前资料均为虚构示例。" />
       <div className="recommendations">
         {RECOMMENDED.map((group) => <Prompts key={group.category} title={group.category} vertical
-          items={group.questions.map((question) => ({ key: question, description: question, disabled: pendingId !== null }))}
+          items={group.questions.map((question) => ({ key: question, description: question, disabled: requesting || pendingId !== null }))}
           onItemClick={({ data }) => { void send(String(data.key)); }} />)}
       </div>
       <Bubble.List autoScroll={false} className="chat-bubbles" items={chats.map((item, index) => ({
@@ -85,13 +96,18 @@ export default function Chat() {
             ...(item.ticketId ? [] : [{ key: 'human', label: '转人工', icon: <CustomerServiceOutlined /> }]),
           ].map((action) => ({ ...action, actionRender: <Button type="text" size="small" aria-label={action.label}
             onClick={() => act(action.key, item, index)}>{action.icon}{action.label}</Button> }))} />
+          {item.offlineFallback ? <Typography.Paragraph type="secondary" style={{ fontSize: 12 }}>智能体暂不可用，已切换离线模式</Typography.Paragraph> : null}
           {item.ticketId ? <Alert type={item.escalated === '疑似紧急' ? 'error' : 'info'} showIcon title="已转交老师/学生会处理"
             description={<><span>原因：{item.escalated}。回复后会在「我的咨询」通知你。</span><Button type="link" onClick={() => navigate('/student/tickets')}>查看我的咨询</Button></>} /> : null}
         </div> : undefined,
       }))} />
+      {requesting ? <div aria-live="polite" className="stream-reply">
+        {progress ? <Typography.Paragraph type="secondary">正在查阅制度资料…</Typography.Paragraph> : null}
+        <div style={{ whiteSpace: 'pre-wrap' }}>{streamText.split('[[')[0]}</div>
+      </div> : null}
       <div ref={end} />
-      <div className="chat-sender"><Sender value={value} onChange={setValue} placeholder="请输入团学事务问题…" loading={pendingId !== null}
-        onSubmit={(text) => { void send(text); }} onCancel={() => { setPendingId(null); busy.current = false; }} />
+      <div className="chat-sender"><Sender value={value} onChange={setValue} placeholder="请输入团学事务问题…" loading={requesting || pendingId !== null}
+        onSubmit={(text) => { void send(text); }} onCancel={() => { controller.current?.abort(); setPendingId(null); busy.current = false; }} />
         <div className="demo-caption">仅依据示例资料作答 · 个人事项请老师核实</div></div>
     </div>
   );

@@ -7,7 +7,7 @@ export const urgentFirst = (a: Ticket, b: Ticket) => Number(b.reason === '疑似
 export function ticketDocument(ticket: Ticket, now = Date.now()): KbDoc {
   if (!ticket.reply?.trim()) throw new Error('请先回复，再沉淀到知识库');
   return { id: `ticket-${ticket.id}`, title: `${ticket.question}（咨询答复）`, category: ticket.category,
-    content: `问：${ticket.question}\n答：${ticket.reply.trim()}`, source: 'ticket', updatedAt: now };
+    content: `问：${ticket.question}\n答：${ticket.reply.trim()}`, source: 'ticket', repliedBy: ticket.repliedBy, updatedAt: now };
 }
 export function dashboardMetrics(qaLogs: QaLog[], tickets: Ticket[], notices: Notice[], now = Date.now()) {
   const start = new Date(now); start.setHours(0, 0, 0, 0);

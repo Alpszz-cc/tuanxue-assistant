@@ -8,6 +8,7 @@ export interface KbDoc {
   category: Category;
   content: string;
   source: 'seed' | 'upload' | 'ticket';
+  repliedBy?: string;
   updatedAt: number;
 }
 

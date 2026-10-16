@@ -1,4 +1,6 @@
-import { App, Popconfirm, Card, Typography, Alert, Button } from 'antd';
+import { useState } from 'react';
+import { testConnection } from '../../lib/hermesClient';
+import { Radio, Space, App, Popconfirm, Card, Typography, Alert, Button } from 'antd';
 import { ClearOutlined } from '@ant-design/icons';
 import { useStore } from '../../store';
 
@@ -11,6 +13,8 @@ const { Title, Paragraph, Text } = Typography;
 export default function Settings() {
   const { message } = App.useApp();
   const resetDemoData = useStore((s) => s.resetDemoData);
+  const [connection, setConnection] = useState<{ ok: boolean; text: string } | null>(null);
+  const [testing, setTesting] = useState(false);
   const answerMode = useStore((s) => s.answerMode);
 
   return (
@@ -18,14 +22,12 @@ export default function Settings() {
       <Title level={4}>设置</Title>
 
       <Card title="问答模式" style={{ marginBottom: 16 }}>
-        <Alert
-          type="info"
-          showIcon
-          title={`当前模式：${
-            answerMode === 'offline' ? '离线演示模式（本地检索 + 模板回答）' : 'Hermes 模式（调用本地智能体）'
-          }`}
-          description="模式切换与「测试连接」将在第 5 步接入 Hermes API Server 时开放。答辩现场建议使用离线模式，稳定不依赖网络。"
-        />
+        <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+          <Radio.Group value={answerMode} onChange={(event) => useStore.getState().setAnswerMode(event.target.value)} options={[{ label: '离线演示', value: 'offline' }, { label: '智能体', value: 'hermes' }]} />
+          <Typography.Text type="secondary">演示推荐离线模式。智能体不可用时自动降级；连接参数在服务器环境变量中配置。</Typography.Text>
+          <Button loading={testing} onClick={async () => { setTesting(true); try { const models = await testConnection(); setConnection({ ok: true, text: `连接成功：${models}` }); } catch (error) { setConnection({ ok: false, text: `连接失败：${error instanceof Error ? error.message : '网络不可用'}` }); } finally { setTesting(false); } }}>测试连接</Button>
+          {connection ? <Alert type={connection.ok ? 'success' : 'error'} showIcon title={connection.text} /> : null}
+        </Space>
       </Card>
 
       <Card title="演示数据">

@@ -57,7 +57,7 @@
       └─ Hermes 模式：规则 + 检索到的制度片段 → POST /hermes/v1/chat/completions（stream）
                          │  Vite 代理：在服务端注入 API Key（Key 不进浏览器、不进打包产物）
                          ▼
-               Hermes Agent（独立 profile「tuanxue」，API Server 端口 8643）
+               Hermes Agent（独立 profile「tuanxue」，API Server 端口 8650）
                  └─ skills/tuanxue-assistant/（SKILL.md + references/ 示例制度）
 ```
 
@@ -248,7 +248,7 @@ Mock 身份（不做真实登录，登录页只选身份）：
 - `hermes/setup.sh`，做这些事（**具体命令先查 Hermes 官方文档 user-guide/profiles.md、features/skills.md、features/api-server.md 核对后再写**）：
   - 创建独立 profile：`hermes profile create tuanxue --no-skills`（不要动我自己正在用的默认 profile）；
   - 把 skill 复制进 tuanxue profile 的 skills 目录，把 SOUL.md 放进 profile 目录；
-  - 开启 API Server：`API_SERVER_ENABLED=true`、`API_SERVER_PORT=8643`（避开默认 8642）、`API_SERVER_KEY` 随机生成；
+  - 开启 API Server：`API_SERVER_ENABLED=true`、`API_SERVER_PORT=8650`（避开默认 8642）、`API_SERVER_KEY` 随机生成；
   - 把 API Server 平台的工具集限制为只有 skills：`platform_toolsets.api_server` 设为 `["skills"]`，避免学生端能调用终端 / 文件工具。
 - `hermes/README.md`：运行 setup、用 `tuanxue setup` 配置大模型 Key、`tuanxue gateway` 启动、curl 验证。
 - 真跑一遍：`/health`、带 Key 的 `/v1/models`、问一个综测问题、问一个资料外问题，把 curl 输出贴进 PROGRESS.md（Key 打码）。如果卡在配置大模型 Key 这一步，停下来告诉我需要我提供什么。
@@ -260,7 +260,7 @@ Mock 身份（不做真实登录，登录页只选身份）：
 ### 第 5 步：前端接入 Hermes
 
 做：
-- `.env.example`：`HERMES_API_BASE=http://127.0.0.1:8643`、`HERMES_API_KEY=`、`HERMES_MODEL=tuanxue`（以 `/v1/models` 返回的 id 为准）。真实值放 `.env.local`。
+- `.env.example`：`HERMES_API_BASE=http://127.0.0.1:8650`、`HERMES_API_KEY=`、`HERMES_MODEL=tuanxue`（以 `/v1/models` 返回的 id 为准）。真实值放 `.env.local`。
 - `vite.config.ts`：用 `loadEnv` 读取（**不要用 `VITE_` 前缀**，避免 Key 打进前端包）；`server.proxy['/hermes']` 指向 `HERMES_API_BASE`，rewrite 去掉 `/hermes` 前缀，代理时加 `Authorization: Bearer ${HERMES_API_KEY}`。
 - `lib/hermesClient.ts`：fetch POST `/hermes/v1/chat/completions`，`stream: true`；手写 SSE 解析：普通 `data:` 帧取 `choices[0].delta.content` 追加；**`event: hermes.tool.progress` 帧不要拼进正文**，只在界面显示「正在查阅制度资料…」（可用 ThoughtChain 或一行小字）；`data: [DONE]` 结束；支持 AbortController（停止生成）；60 秒超时。
 - answerEngine 的 Hermes 模式：system 消息 = 第 8 节规则 +「请遵循 tuanxue-assistant 技能」+ 制度资料（知识库总字数 ≤ 12000 时全部附上，否则附检索 Top 6 片段，每段带《标题》）；带最近 6 条对话；流式渲染；结束后解析 `[[ESCALATE:原因]]`；「参考资料」用本地检索结果展示。

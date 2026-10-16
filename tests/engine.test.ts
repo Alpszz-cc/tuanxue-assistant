@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { answerOffline, parseEscalation, RECOMMENDED } from '../src/lib/answerEngine';
 import { retrieve, splitDoc } from '../src/lib/retrieval';
-import { SEED_DOCS } from '../src/data/seed';
+import { SEED_DOCS, SEED_NOTICES, SEED_QALOGS } from '../src/data/seed';
 
 const expected = [
   ['doc-zongce', '第二条'], ['doc-zongce', '第四条'],
@@ -76,7 +76,7 @@ console.log('PASS: 23 free questions and first-person-only review routing');
 const { ticketDocument, dashboardMetrics } = await import('../src/lib/admin');
 const ticket = { id: 'roundtrip', studentId: 'stu001', studentName: '张同学', question: '食堂几点开门',
   category: '其他' as const, reason: 'AI无法解答' as const, status: '已回复' as const,
-  reply: '演示食堂每日早上七点开门，具体以现场通知为准。', createdAt: Date.now() };
+  repliedBy: '王老师', reply: '演示食堂每日早上七点开门，具体以现场通知为准。', createdAt: Date.now() };
 const saved = ticketDocument(ticket);
 assert.equal(saved.content, `问：${ticket.question}\n答：${ticket.reply}`);
 assert.equal(saved.category, ticket.category);
@@ -86,7 +86,7 @@ const learned = answerOffline({ question: ticket.question, docs: [...SEED_DOCS, 
 assert.equal(learned.escalated, undefined);
 assert.ok(learned.content.includes(ticket.reply));
 assert.equal(learned.sources[0].docId, saved.id);
-assert.ok(learned.content.includes(saved.title));
+assert.ok(learned.content.includes('依据：王老师的答复（已沉淀至知识库）'));
 const now = new Date(2026, 9, 16, 12).getTime();
 const metrics = dashboardMetrics([
   { id: 'today', studentId: 'stu001', question: 'a', category: '其他', resolvedByAI: true, createdAt: now },
@@ -105,3 +105,11 @@ for (const doc of SEED_DOCS) {
   assert.equal(readFileSync(reference, 'utf8'), doc.content, `Hermes reference drift: ${doc.id}`);
 }
 console.log('PASS: 5 Hermes reference files exactly match frontend seed text');
+
+assert.equal(SEED_QALOGS.length, 40);
+for (const [question, count] of [['志愿服务在综测里怎么加分', 6], ['奖学金什么时候发', 5], ['第二课堂学分要修多少', 4], ['毕业了团关系怎么转', 4], ['一等奖学金有什么要求', 3]] as const) {
+  assert.equal(SEED_QALOGS.filter((log) => log.question === question).length, count);
+}
+assert.ok(dashboardMetrics(SEED_QALOGS, [], SEED_NOTICES).readRate > 0);
+assert.deepEqual(SEED_NOTICES.find((notice) => notice.pinned)?.readBy, []);
+console.log('PASS: repeated seed frequencies and initial notification read rate');

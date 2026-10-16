@@ -232,3 +232,25 @@ hermes config set --help
 - 本次未创建/修改任何 Hermes profile，未生成真实 API Key，未写 .env.local，未启动 gateway，未请求 /health 或 /v1/models。真实 API 运行验收待用户手动进行。
 - npm run build、npm test 均通过；grep -c tencentyun package-lock.json 为 0。
 - 第 5 步代理、流式接入和模式切换未开始。
+
+## 第 5 步：OpenAI 兼容接入层（模拟验证）
+
+- Vite loadEnv 仅在服务器读取 HERMES_*；开发和 preview 代理 /hermes，去掉前缀并注入 Authorization。没有 BASE 时不注册代理。模型名称可用于请求，Key 不传浏览器、不写入 dist。
+- 增加 .env.example（8650，也可用其他兼容 API）、npm run demo（4173 严格端口）、npm run mock-llm（仅 127.0.0.1:8659、node:http，无第三方依赖，不用于正式演示）。
+- SSE 手写解析包含跨块 CRLF/多帧、工具进度过滤、DONE、AbortController 与 60 秒超时；system 为规则+技能约定+全部 ≤12000 字知识库或检索 Top6，带最近6条历史。设置支持模式切换、测试连接；学生端显示模式、流式文字与进度。
+- 请求失败、超时、空内容都退回离线；完成后统一解析标记并复用原子工单写入，气泡显示“智能体暂不可用，已切换离线模式”。主动停止不触发降级。
+- setup 默认8650，支持 HERMES_BIN，先检查 --version 与端口再操作配置；PLAN/README 同步端口，说明只能在真实 SSH 终端运行。本步未运行真实 Hermes。
+- 示例日志仍40条、近7天，重复频次为6/5/4/4/3；早期通知有部分已读，置顶通知保持全未读。工单资料保留实际回复人，引用改为“依据：王老师的答复（已沉淀至知识库）”。
+
+### 实际验收
+
+临时 .env.local 配置 BASE=http://127.0.0.1:8659、测试专用 Key，执行 npm run mock-llm 和 npm run demo；Chromium 访问生产预览 4173：
+
+1. 设置切智能体，测试连接显示“连接成功：tuanxue”。学生问“志愿服务在综测里怎么加分”，观察到进度和未结束的部分正文，最终回答每满4小时0.5分、最高3分，引用综测细则第二条，无工具帧混入正文。
+2. 问“怎么申请入党”，回答资料无规定，生成 AI无法解答 待处理工单，界面没有原始 ESCALATE 标记。
+3. 停掉 mock 后测试连接显示失败及 HTTP 原因；再问志愿问题，离线答案正常出现，持久化 offlineFallback=true，气泡有降级提示，无白屏或未捕获异常。
+4. dist 全文件检索测试 Key，命中0；package-lock.json 的 tencentyun 计数0。
+5. 已停掉模拟与测试预览服务，删除临时 .env.local，未将测试配置提交。
+6. npm test 覆盖SSE分片、进度过滤、超时、主动取消、空/失败降级、上下文、重复数据及既有回归；npm run build 通过。五份 Hermes 参考正文仍与 seed 一致。
+
+边界：真实 Hermes 尚未接通，兼容性基于本地模拟和客户端回归验证；Pages 无服务器代理，默认离线演示。

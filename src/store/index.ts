@@ -20,6 +20,7 @@ interface TxzsState extends DemoData {
   login: (user: MockUser) => void;
   logout: () => void;
   resetDemoData: () => void;
+  setAnswerMode: (mode: 'offline' | 'hermes') => void;
   addQuestion: (studentId: string, message: ChatMessage) => void;
   finishAnswer: (student: MockUser, question: string, reply: AnswerResult) => string;
   escalateMessage: (student: MockUser, messageId: string, question: string) => void;
@@ -61,6 +62,7 @@ export const useStore = create<TxzsState>()(
       currentUser: initialUser(),
       login: (user) => { sessionStorage.setItem(IDENTITY_KEY, user.id); set({ currentUser: user }); },
       logout: () => { sessionStorage.removeItem(IDENTITY_KEY); set({ currentUser: null }); },
+      setAnswerMode: (answerMode) => set({ answerMode }),
       resetDemoData: () => set(freshSeed()),
       addDoc: (doc) => set((state) => ({ docs: [doc, ...state.docs] })),
       removeDoc: (id) => set((state) => ({ docs: state.docs.filter((doc) => doc.id !== id) })),
@@ -85,7 +87,7 @@ export const useStore = create<TxzsState>()(
         set((state) => ({
           chats: { ...state.chats, [student.id]: [...(state.chats[student.id] ?? []),
             { id, role: 'assistant', content: reply.content, sources: reply.sources,
-              escalated: reply.escalated, ticketId, createdAt }] },
+              escalated: reply.escalated, offlineFallback: reply.offlineFallback, ticketId, createdAt }] },
           tickets: ticketId && reply.escalated ? [{ id: ticketId, studentId: student.id,
             studentName: student.name, question, aiAnswer: reply.content, category: reply.category,
             reason: reply.escalated, status: '待处理', createdAt }, ...state.tickets] : state.tickets,

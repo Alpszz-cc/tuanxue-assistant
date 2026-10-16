@@ -127,7 +127,7 @@ export const SEED_NOTICES: Notice[] = [
     audience: '学生会干部',
     publisher: '陈同学',
     createdAt: ago(1, 5),
-    readBy: [],
+    readBy: ['stu001'],
   },
   {
     id: 'notice-3',
@@ -137,7 +137,7 @@ export const SEED_NOTICES: Notice[] = [
     audience: '2024级',
     publisher: '王老师',
     createdAt: ago(3, 1),
-    readBy: [],
+    readBy: ['stu001'],
   },
   {
     id: 'notice-4',
@@ -147,7 +147,7 @@ export const SEED_NOTICES: Notice[] = [
     audience: '全体学生',
     publisher: '陈同学',
     createdAt: ago(4, 2),
-    readBy: [],
+    readBy: ['stu001'],
   },
   {
     id: 'notice-5',
@@ -157,7 +157,7 @@ export const SEED_NOTICES: Notice[] = [
     audience: '全体学生',
     publisher: '王老师',
     createdAt: ago(5, 4),
-    readBy: [],
+    readBy: ['stu001', 'stu002'],
   },
 ];
 
@@ -283,7 +283,14 @@ function buildQaLogs(): QaLog[] {
     { q: '临时困难补助找谁申请', c: '奖助申请', ai: true },
     { q: '综测排名怎么看', c: '综测评奖', ai: false },
   ];
-  return qs.map((item, i) => ({
+  const repeated: typeof qs = [
+    ...Array(6).fill(qs[0]), ...Array(5).fill(qs[7]),
+    ...Array(4).fill(qs[19]), ...Array(4).fill({ q: '毕业了团关系怎么转', c: '团务转接', ai: true }),
+    ...Array(3).fill(qs[6]),
+  ];
+  const repeatedQuestions = new Set(repeated.map((item) => item.q));
+  const distributed = [...repeated, ...qs.filter((item) => !repeatedQuestions.has(item.q)).slice(0, 18)];
+  return distributed.map((item, i) => ({
     id: `qa-${String(i + 1).padStart(3, '0')}`,
     studentId: i % 3 === 0 ? 'stu002' : 'stu001',
     question: item.q,
