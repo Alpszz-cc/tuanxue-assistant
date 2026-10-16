@@ -1,3 +1,4 @@
+import logo from '../assets/logo.svg';
 import { useState } from 'react';
 import { Card, Typography, Button, Space, Divider, Tag, App } from 'antd';
 import { QuestionCircleOutlined, TeamOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
@@ -40,8 +41,9 @@ export default function Login() {
       }}
     >
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
+        <img src={logo} width={72} height={72} alt="猫头鹰对话 Logo" />
         <Title level={2} style={{ marginBottom: 8, color: '#C8102E' }}>
-          团学事务助手
+          武汉大学哲学学院团学事务助手
         </Title>
         <Text type="secondary" style={{ fontSize: 16 }}>
           综测 · 奖助 · 团务 · 活动 —— 制度问答与事务办理一站式服务
@@ -106,7 +108,7 @@ export default function Login() {
       )}
 
       <div style={{ marginTop: 40 }}>
-        <Tag color="red">答辩演示 Demo</Tag>
+        <Tag color="red">演示 Demo</Tag>
         <Tag>数据仅存于本浏览器 localStorage</Tag>
         {currentUser && (
           <Button type="link" onClick={() => enter(currentUser)}>

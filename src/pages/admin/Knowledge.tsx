@@ -24,7 +24,7 @@ export default function Knowledge() {
     </Space>
     <Table<KbDoc> rowKey="id" dataSource={docs} scroll={{ x: 850 }} columns={[
       { title: '标题', dataIndex: 'title', render: (title, doc) => <Button type="link" className="table-title" onClick={() => setViewId(doc.id)}>{title}</Button> },
-      { title: '分类', dataIndex: 'category', width: 100 }, { title: '来源', dataIndex: 'source', width: 100, render: (source: KbDoc['source']) => <Tag>{({ seed: '示例', upload: '上传/新增', ticket: '工单沉淀' })[source]}</Tag> },
+      { title: '分类', dataIndex: 'category', width: 100 }, { title: '来源', dataIndex: 'source', width: 100, render: (source: KbDoc['source']) => <Tag>{({ seed: '示例', upload: '上传/新增', ticket: '工单沉淀', notice: '通知同步' })[source]}</Tag> },
       { title: '字数', width: 80, render: (_, doc) => doc.content.length }, { title: '更新时间', dataIndex: 'updatedAt', width: 165, render: (time) => new Date(time).toLocaleString('zh-CN') },
       { title: '操作', width: 80, render: (_, doc) => <Popconfirm title="删除这份资料？" onConfirm={() => useStore.getState().removeDoc(doc.id)}><Button type="link" danger>删除</Button></Popconfirm> },
     ]} />

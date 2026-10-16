@@ -1,4 +1,4 @@
-# 学院团学事务助手
+# 武汉大学哲学学院团学事务助手
 
 面向学院学生、老师和学生干部的网页 Demo：依据制度解答问题，资料外问题转人工，老师回复沉淀成知识，通知按对象发布并同步已读。
 
@@ -11,7 +11,7 @@
 - [学生端 · 张同学](http://localhost:4173/#/student/chat?as=stu001)
 - [管理端 · 王老师](http://localhost:4173/#/admin/dashboard?as=admin_wang)
 
-学生版式最大宽度480px；管理端适合桌面，窄屏自动收起侧栏。所有身份是 mock，制度和联系方式均为虚构示例，不是实际学校政策。身份保存在各标签页 sessionStorage，业务数据在 localStorage，同源窗口自动同步；数据不会上传至后端数据库。
+学生版式最大宽度480px；管理端适合桌面，窄屏自动收起侧栏。所有身份是 mock，内置“××学院（示例）”制度和示例联系方式均为虚构，不是实际学校政策；赛事通知由用户提供、演示时现场发布。身份保存在各标签页 sessionStorage，业务数据在 localStorage，同源窗口自动同步；数据不会上传至后端数据库。
 
 ## 本地运行
 
@@ -27,7 +27,7 @@ npm run demo
 ## 已实现
 
 - 学生端：四类八个推荐问题、制度检索与来源原文、流式问答、反馈/复制、自动或手动转人工、通知和我的咨询。
-- 管理端：实时统计、制度新增/上传（txt/md/docx）、通知对象与已读回执、工单回复与知识沉淀、模式切换和连接测试。
+- 管理端：实时统计、制度新增/上传（txt/md/docx）、通知对象、同步到知识库与已读回执、工单回复与知识沉淀、模式切换和连接测试。
 - 沟通整理：从群聊生成通知、待办、截止时间及最终修改意见，核对后发布给学生会干部；内置示例支持完整离线演示。
 - 数据：5份示例资料、5条通知、6条工单、40条近7天历史咨询，支持一键重置。
 
@@ -36,8 +36,7 @@ npm run demo
 ![登录页](docs/screenshots/01-login.png)
 ![工作台](docs/screenshots/02-dashboard.png)
 ![学生端问答](docs/screenshots/03-student-chat.png)
-![管理端咨询闭环](docs/screenshots/04-admin-tickets.png)
-![群聊整理预览](docs/screenshots/05-chat-summary.png)
+![通知发布与同步知识库](docs/screenshots/04-admin-notices.png)
 
 ## 接入 Hermes 或兼容接口
 

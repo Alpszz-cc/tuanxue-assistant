@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "学院团学事务助手 · 网页 Demo（基于开源 Hermes 智能体）",
+  "description": "武汉大学哲学学院团学事务助手 · 网页 Demo（基于开源 Hermes 智能体）",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

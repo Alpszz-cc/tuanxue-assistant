@@ -9,7 +9,7 @@ const expected = [
   ['doc-zhuanjie', '第一条', '第二条'], ['doc-zhuanjie', '第四条'],
   ['doc-baoming', '第二条'], ['doc-baoming', '第四条'],
 ];
-RECOMMENDED.flatMap((group) => group.questions).forEach((question, i) => {
+[...RECOMMENDED.slice(0, 3), { category: '活动报名', questions: ['报名后去不了怎么办', '第二课堂学分要修多少'] }].flatMap((group) => group.questions).forEach((question, i) => {
   const reply = answerOffline({ question, docs: SEED_DOCS });
   assert.equal(reply.escalated, undefined, question);
   assert.equal(reply.sources[0].docId, expected[i][0], question);
@@ -113,3 +113,39 @@ for (const [question, count] of [['志愿服务在综测里怎么加分', 6], ['
 assert.ok(dashboardMetrics(SEED_QALOGS, [], SEED_NOTICES).readRate > 0);
 assert.deepEqual(SEED_NOTICES.find((notice) => notice.pinned)?.readBy, []);
 console.log('PASS: repeated seed frequencies and initial notification read rate');
+
+const { DEMO_NOTICE_CONTENT, DEMO_NOTICE_TITLE, noticeDocument } = await import('../src/data/demoNotice');
+const notice = { id: 'live-demo', title: DEMO_NOTICE_TITLE, content: DEMO_NOTICE_CONTENT, type: '通知' as const, audience: '全体学生' as const, publisher: '王老师', createdAt: Date.now(), readBy: [] };
+const noticeDoc = noticeDocument(notice);
+assert.equal(noticeDoc.source, 'notice'); assert.equal(noticeDoc.content, DEMO_NOTICE_CONTENT);
+assert.ok(!SEED_DOCS.some((doc) => doc.title === DEMO_NOTICE_TITLE));
+assert.ok(!SEED_NOTICES.some((item) => item.title === DEMO_NOTICE_TITLE));
+assert.equal(answerOffline({ question: '评审PPT什么时候交', docs: SEED_DOCS }).escalated, 'AI无法解答');
+const publishedDocs = [...SEED_DOCS, noticeDoc];
+const notificationQuestions: [string, string[], string?][] = [
+  ['报名表什么时候截止', ['10月16日下午17:00']],
+  ['报名表发到哪个邮箱', ['whuzxxyxsfzb@163.com'], '一、报名表提交'],
+  ['报名表要盖什么章', ['团委章/院章']],
+  ['评审PPT什么时候交', ['10月18日12:00'], '二、评审PPT提交'],
+  ['评审PPT文件怎么命名', ['评审PPT+榜题名称+队伍名+队长姓名']],
+  ['Demo需要单独上传吗', ['整合进PPT']],
+  ['评审会是线上还是线下', ['线上腾讯会议']],
+  ['哲学学院榜题最多立项几支队伍', ['3支']],
+  ['没有入围立项怎么办', ['自主创新赛道']],
+  ['公示到什么时候', ['10月22日']],
+  ['对评审结果有异议怎么办', ['whuzxxyxsfzb@163.com']],
+  ['大赛平台材料什么时候截止上传', ['10月19日24:00']],
+  ['赛事交流QQ群是多少', ['1049527546', '1126134793']],
+];
+for (const [question, fragments, section] of notificationQuestions) {
+  const reply = answerOffline({ question, docs: publishedDocs });
+  assert.equal(reply.escalated, undefined, question);
+  for (const fragment of fragments) assert.ok(reply.content.includes(fragment), `${question}: ${reply.content}`);
+  assert.equal(reply.sources[0].docId, noticeDoc.id, question);
+  assert.ok(reply.content.includes(`依据：《${DEMO_NOTICE_TITLE}》`), question);
+  if (section) assert.ok(reply.content.includes(section), question);
+  assert.ok(reply.content.length <= 250, question);
+}
+assert.equal(answerOffline({ question: '评委都有哪些老师', docs: publishedDocs }).escalated, 'AI无法解答');
+for (const question of RECOMMENDED[3].questions) assert.equal(answerOffline({ question, docs: publishedDocs }).escalated, undefined);
+console.log('PASS: 15 notice checks, publication boundary, original notice attribution and recommended contest questions');

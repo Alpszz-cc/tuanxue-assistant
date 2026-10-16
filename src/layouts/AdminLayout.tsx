@@ -1,3 +1,4 @@
+import logo from '../assets/logo.svg';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout, Menu, Button, Space, Tag, Dropdown } from 'antd';
 import {
@@ -24,11 +25,11 @@ export default function AdminLayout() {
   const selected = location.pathname.match(/\/admin\/(\w+)/)?.[1] ?? 'dashboard';
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className="admin-layout" style={{ minHeight: '100vh' }}>
       <Sider breakpoint="lg" collapsedWidth={64} width={200} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
-        <div className="admin-brand" style={{ padding: '20px 16px 12px', fontWeight: 700, fontSize: 17, color: '#C8102E' }}>
-          <span className="brand-full">团学事务助手</span><span className="brand-short">团学</span>
-          <div style={{ fontSize: 12, fontWeight: 400, color: '#999' }}>管理端</div>
+        <div className="admin-brand" title="武汉大学哲学学院团学事务助手">
+          <img src={logo} width={36} height={36} alt="猫头鹰对话 Logo" />
+          <div className="brand-full"><div className="school-name">武汉大学哲学学院</div><strong>团学事务助手</strong></div>
         </div>
         <Menu
           mode="inline"
@@ -58,7 +59,7 @@ export default function AdminLayout() {
           }}
         >
           <Space className="admin-identity" wrap>
-            <Tag color="red">管理端</Tag>
+            <Tag color="red">演示 Demo</Tag>
             <span>
               当前身份：<b>{currentUser.name}</b><span className="admin-user-title">（{currentUser.title}）</span>
             </span>

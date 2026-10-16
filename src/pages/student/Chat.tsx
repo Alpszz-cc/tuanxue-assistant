@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Actions from '@ant-design/x/es/actions';
 import Bubble from '@ant-design/x/es/bubble';
-import Prompts from '@ant-design/x/es/prompts';
 import Sender from '@ant-design/x/es/sender';
 import Sources from '@ant-design/x/es/sources';
 import Welcome from '@ant-design/x/es/welcome';
@@ -16,6 +15,7 @@ const EMPTY: ChatMessage[] = [];
 export default function Chat() {
   const student = useStore((s) => s.currentUser)!;
   const chats = useStore((s) => s.chats[student.id] ?? EMPTY);
+  const [showQuestions, setShowQuestions] = useState(false);
   const mode = useStore((s) => s.answerMode);
   const [streamText, setStreamText] = useState('');
   const [requesting, setRequesting] = useState(false);
@@ -38,7 +38,7 @@ export default function Chat() {
     const question = input.trim();
     if (!question || busy.current) return;
     busy.current = true;
-    setValue('');
+    setValue(''); setShowQuestions(false);
     setStreamText(''); setProgress(false); setRequesting(true);
     controller.current = new AbortController();
     try {
@@ -66,14 +66,15 @@ export default function Chat() {
   };
   return (
     <div className="chat-page">
-      <div className="student-heading"><div><Typography.Title level={4}>团学问答</Typography.Title>
+      <div className="student-heading"><div className="student-brand"><Typography.Title level={4}>团学问答</Typography.Title>
         <Typography.Text type="secondary">{student.name}，有问题随时问</Typography.Text></div><Tag color="red">{mode === 'hermes' ? '智能体' : '离线演示'}</Tag></div>
-      <Welcome icon={<RobotOutlined />} title="你好，我是团学事务助手" description="依据学院制度解答，附上资料出处；需要核实的问题交给老师。当前资料均为虚构示例。" />
-      <div className="recommendations">
-        {RECOMMENDED.map((group) => <Prompts key={group.category} title={group.category} vertical
-          items={group.questions.map((question) => ({ key: question, description: question, disabled: requesting || pendingId !== null }))}
-          onItemClick={({ data }) => { void send(String(data.key)); }} />)}
-      </div>
+      {chats.length ? <Button className="faq-toggle" onClick={() => setShowQuestions((value) => !value)}>常见问题</Button> : null}
+      {!chats.length ? <Welcome icon={<RobotOutlined />} title="欢迎使用武汉大学哲学学院团学事务助手" description="查阅学院通知与制度，核对出处；个人事项交给老师处理。内置制度均为虚构示例。" /> : null}
+      {(!chats.length || showQuestions) ? <div className="question-groups">
+        {RECOMMENDED.map((group) => <div key={group.category} className="question-group"><small>{group.category}</small><div className="question-tags">
+          {group.questions.map((question) => <Button key={question} size="small" disabled={requesting || pendingId !== null} onClick={() => { void send(question); }}>{question}</Button>)}
+        </div></div>)}
+      </div> : null}
       <Bubble.List autoScroll={false} className="chat-bubbles" items={chats.map((item, index) => ({
         key: item.id, role: item.role === 'user' ? 'user' : 'ai', content: item.content,
         placement: item.role === 'user' ? 'end' : 'start',
@@ -108,7 +109,7 @@ export default function Chat() {
       <div ref={end} />
       <div className="chat-sender"><Sender value={value} onChange={setValue} placeholder="请输入团学事务问题…" loading={requesting || pendingId !== null}
         onSubmit={(text) => { void send(text); }} onCancel={() => { controller.current?.abort(); setPendingId(null); busy.current = false; }} />
-        <div className="demo-caption">仅依据示例资料作答 · 个人事项请老师核实</div></div>
+        <div className="demo-caption">依据学院已发布的通知与制度作答 · 个人事项请老师核实</div></div>
     </div>
   );
 }

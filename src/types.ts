@@ -7,7 +7,7 @@ export interface KbDoc {
   title: string;
   category: Category;
   content: string;
-  source: 'seed' | 'upload' | 'ticket';
+  source: 'seed' | 'upload' | 'ticket' | 'notice';
   repliedBy?: string;
   updatedAt: number;
 }

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { MOCK_STUDENTS, MOCK_ADMINS } from '../types';
 import type { KbDoc, Notice, ChatMessage, Ticket, QaLog, MockUser } from '../types';
+import { noticeDocument } from '../data/demoNotice';
 import { ticketDocument } from '../lib/admin';
 import type { AnswerResult } from '../lib/answerEngine';
 import { SEED_DOCS, SEED_NOTICES, SEED_TICKETS, SEED_QALOGS } from '../data/seed';
@@ -30,7 +31,7 @@ interface TxzsState extends DemoData {
   addDoc: (doc: KbDoc) => void;
   removeDoc: (id: string) => void;
   restoreSeedDocs: () => void;
-  publishNotice: (notice: Notice) => void;
+  publishNotice: (notice: Notice, syncToKb?: boolean) => void;
   replyTicket: (id: string, reply: string, repliedBy: string) => void;
   closeTicket: (id: string) => void;
   addDocFromTicket: (id: string) => void;
@@ -67,7 +68,7 @@ export const useStore = create<TxzsState>()(
       addDoc: (doc) => set((state) => ({ docs: [doc, ...state.docs] })),
       removeDoc: (id) => set((state) => ({ docs: state.docs.filter((doc) => doc.id !== id) })),
       restoreSeedDocs: () => set((state) => ({ docs: [...structuredClone(SEED_DOCS), ...state.docs.filter((doc) => doc.source !== 'seed')] })),
-      publishNotice: (notice) => set((state) => ({ notices: [notice, ...state.notices] })),
+      publishNotice: (notice, syncToKb = true) => set((state) => ({ notices: [notice, ...state.notices], docs: syncToKb ? [noticeDocument(notice), ...state.docs] : state.docs })),
       replyTicket: (id, reply, repliedBy) => set((state) => ({ tickets: state.tickets.map((ticket) => ticket.id === id
         ? { ...ticket, reply, repliedBy, repliedAt: Date.now(), status: '已回复', studentSeen: false } : ticket) })),
       closeTicket: (id) => set((state) => ({ tickets: state.tickets.map((ticket) => ticket.id === id ? { ...ticket, status: '已关闭' } : ticket) })),

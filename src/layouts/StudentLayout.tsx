@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Badge } from 'antd';
+import logo from '../assets/logo.svg';
+import { Badge, Tag } from 'antd';
 import {
   MessageOutlined,
   NotificationOutlined,
@@ -40,6 +41,7 @@ export default function StudentLayout() {
   return (
     <div className="student-viewport">
       <div className="student-shell">
+        <header className="student-topbar"><img src={logo} width={32} height={32} alt="猫头鹰对话 Logo" /><div><small>武汉大学哲学学院</small><strong>团学事务助手</strong></div><Tag color="red">演示 Demo</Tag></header>
         <div className="student-body">
           <Outlet />
         </div>
