@@ -25,9 +25,9 @@ export default function AdminLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider width={200} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
-        <div style={{ padding: '20px 16px 12px', fontWeight: 700, fontSize: 17, color: '#C8102E' }}>
-          团学事务助手
+      <Sider breakpoint="lg" collapsedWidth={64} width={200} theme="light" style={{ borderRight: '1px solid #f0f0f0' }}>
+        <div className="admin-brand" style={{ padding: '20px 16px 12px', fontWeight: 700, fontSize: 17, color: '#C8102E' }}>
+          <span className="brand-full">团学事务助手</span><span className="brand-short">团学</span>
           <div style={{ fontSize: 12, fontWeight: 400, color: '#999' }}>管理端</div>
         </div>
         <Menu
@@ -43,8 +43,9 @@ export default function AdminLayout() {
           ]}
         />
       </Sider>
-      <Layout>
+      <Layout style={{ minWidth: 0 }}>
         <Header
+          className="admin-header"
           style={{
             background: '#fff',
             borderBottom: '1px solid #f0f0f0',
@@ -56,10 +57,10 @@ export default function AdminLayout() {
             lineHeight: '56px',
           }}
         >
-          <Space>
+          <Space className="admin-identity" wrap>
             <Tag color="red">管理端</Tag>
             <span>
-              当前身份：<b>{currentUser.name}</b>（{currentUser.title}）
+              当前身份：<b>{currentUser.name}</b><span className="admin-user-title">（{currentUser.title}）</span>
             </span>
           </Space>
           <Space>
@@ -88,7 +89,7 @@ export default function AdminLayout() {
             </Dropdown>
           </Space>
         </Header>
-        <Content style={{ padding: 20, overflow: 'auto' }}>
+        <Content style={{ minWidth: 0, padding: 20, overflow: 'auto' }}>
           <Outlet />
         </Content>
       </Layout>

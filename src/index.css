@@ -64,3 +64,16 @@ body {
 .top-question > span:nth-child(2) { flex: 1; }
 .table-title { white-space: normal; height: auto; padding: 0; text-align: left; }
 .notice-form-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+.brand-short { display: none; }
+.ant-layout-sider-collapsed .brand-full, .ant-layout-sider-collapsed .admin-brand > div { display: none; }
+.ant-layout-sider-collapsed .brand-short { display: inline; }
+.admin-header { gap: 8px; }
+@media (max-width: 900px) {
+  .admin-header { padding: 10px 12px !important; height: auto !important; line-height: 1.5 !important; flex-wrap: wrap; }
+  .admin-user-title { display: none; }
+}
+@media (max-width: 480px) {
+  .notice-form-options { grid-template-columns: minmax(0, 1fr); }
+  .ant-layout-content { padding: 12px !important; }
+}

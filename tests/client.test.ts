@@ -31,3 +31,15 @@ const messages = buildMessages({ question: 'a', docs: SEED_DOCS, history });
 assert.equal(messages.length, 8); assert.equal(messages[1].content, '4');
 assert.ok(messages[0].content.includes('tuanxue-assistant'));
 console.log('PASS: fragmented SSE, progress filtering, empty/error fallback, timeout, cancellation and context history');
+
+const { EXAMPLE_CHAT, EXAMPLE_DRAFT, summarizeChat, parseNoticeDraft } = await import('../src/lib/noticeDraft');
+assert.deepEqual((await summarizeChat(EXAMPLE_CHAT, 'offline')).draft, EXAMPLE_DRAFT);
+await assert.rejects(summarizeChat('任意新群聊', 'offline'), /内置示例/);
+assert.throws(() => parseNoticeDraft('{"title":"无正文"}'), /格式不完整/);
+try {
+  globalThis.fetch = async () => { throw new Error('down'); };
+  assert.equal((await summarizeChat(EXAMPLE_CHAT, 'hermes')).fallback, true);
+  globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(EXAMPLE_DRAFT) } }] }), { headers: { 'content-type': 'application/json' } });
+  const generated = await summarizeChat('不同群聊', 'hermes'); assert.deepEqual(generated.draft, EXAMPLE_DRAFT); assert.equal(generated.fallback, false);
+} finally { globalThis.fetch = originalFetch; }
+console.log('PASS: online JSON draft, validation, offline sample and unavailable-agent fallback');

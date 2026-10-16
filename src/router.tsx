@@ -1,4 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useLayoutEffect } from 'react';
+import { MOCK_STUDENTS, MOCK_ADMINS } from './types';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useStore } from './store';
 import Login from './pages/Login';
 import StudentLayout from './layouts/StudentLayout';
@@ -24,6 +26,12 @@ function RequireAuth({ children, role }: { children: React.ReactNode; role?: 'st
 }
 
 export default function AppRoutes() {
+  const location = useLocation();
+  const currentUser = useStore((state) => state.currentUser);
+  const requested = [...MOCK_STUDENTS, ...MOCK_ADMINS].find((user) => user.id === new URLSearchParams(location.search).get('as'));
+  // 同页粘贴直达链接也必须优先切换身份，不能先被内页守卫重定向。
+  useLayoutEffect(() => { if (requested && requested.id !== currentUser?.id) useStore.getState().login(requested); }, [requested, currentUser?.id]);
+  if (requested && requested.id !== currentUser?.id) return null;
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
