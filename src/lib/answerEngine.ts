@@ -12,10 +12,10 @@ export interface AnswerResult {
   offlineFallback?: boolean;
 }
 export const RECOMMENDED = [
+  { category: '赛事通知', questions: ['评审PPT什么时候交', '没有入围立项怎么办'] },
   { category: '综测评奖', questions: ['志愿服务在综测里怎么加分', '学生工作在综测里怎么加分'] },
   { category: '奖助申请', questions: ['一等奖学金有什么要求', '家庭经济困难认定需要哪些材料'] },
   { category: '团务转接', questions: ['毕业了团关系怎么转', '团组织关系转接审核要多久'] },
-  { category: '赛事通知', questions: ['评审PPT什么时候交', '没有入围立项怎么办'] },
 ];
 const reasons: EscalateReason[] = ['AI无法解答', '需人工核实', '疑似紧急', '学生申请人工'];
 export function parseEscalation(text: string): { content: string; escalated?: EscalateReason } {
@@ -39,14 +39,16 @@ export function answerOffline({ question, docs }: AnswerRequest): AnswerResult {
   }
   const hits = retrieve(question, docs);
   let first = hits[0];
-  // 高置信 FAQ 可提供语料内的查询扩展；只有制度文本充分支持时才优先引制度。
+  // FAQ 可提供语料内查询扩展；中等匹配须有清晰的制度候选差距，避免含糊借用出处。
   // 不扩展老师沉淀的 FAQ，避免覆盖老师针对该问题的明确回复。
-  if (first?.score >= 0.8 && first.snippet.startsWith('问：') && docs.find((doc) => doc.id === first.docId)?.source !== 'ticket') {
+  if (first?.score >= 0.5 && first.snippet.startsWith('问：') && docs.find((doc) => doc.id === first.docId)?.source !== 'ticket') {
     const clarification = first.snippet.split('答：')[1];
     if (clarification) {
       const policies = docs.filter((doc) => splitDoc(doc).some((text) => /^第[^条]+条/.test(text)));
-      const grounded = retrieve(`${question} ${clarification}`, policies)[0];
-      if (grounded?.score >= 0.5) first = grounded;
+      const [grounded, runnerUp] = retrieve(`${question} ${clarification}`, policies);
+      const supported = grounded && (grounded.score >= 0.5 ||
+        (first.score < 0.8 && grounded.score >= 0.4 && grounded.score >= (runnerUp?.score ?? 0) * 1.5));
+      if (supported) first = grounded;
     }
   }
   if (!first || first.score < 0.40 || missingCoreRatio(question, docs) >= 0.5) {

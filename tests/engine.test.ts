@@ -9,7 +9,7 @@ const expected = [
   ['doc-zhuanjie', '第一条', '第二条'], ['doc-zhuanjie', '第四条'],
   ['doc-baoming', '第二条'], ['doc-baoming', '第四条'],
 ];
-[...RECOMMENDED.slice(0, 3), { category: '活动报名', questions: ['报名后去不了怎么办', '第二课堂学分要修多少'] }].flatMap((group) => group.questions).forEach((question, i) => {
+[...RECOMMENDED.filter((group) => group.category !== '赛事通知'), { category: '活动报名', questions: ['报名后去不了怎么办', '第二课堂学分要修多少'] }].flatMap((group) => group.questions).forEach((question, i) => {
   const reply = answerOffline({ question, docs: SEED_DOCS });
   assert.equal(reply.escalated, undefined, question);
   assert.equal(reply.sources[0].docId, expected[i][0], question);
@@ -147,5 +147,15 @@ for (const [question, fragments, section] of notificationQuestions) {
   assert.ok(reply.content.length <= 250, question);
 }
 assert.equal(answerOffline({ question: '评委都有哪些老师', docs: publishedDocs }).escalated, 'AI无法解答');
-for (const question of RECOMMENDED[3].questions) assert.equal(answerOffline({ question, docs: publishedDocs }).escalated, undefined);
+for (const question of RECOMMENDED.find((group) => group.category === '赛事通知')!.questions) assert.equal(answerOffline({ question, docs: publishedDocs }).escalated, undefined);
 console.log('PASS: 15 notice checks, publication boundary, original notice attribution and recommended contest questions');
+
+assert.equal(RECOMMENDED[0].category, '赛事通知');
+const meetingStart = answerOffline({ question: '评审会几点开始', docs: publishedDocs });
+assert.equal(meetingStart.escalated, undefined);
+assert.ok(meetingStart.content.includes('10月19日12:30-4:00'), meetingStart.content);
+assert.equal(meetingStart.sources[0].docId, noticeDoc.id);
+const resultDate = answerOffline({ question: '结果什么时候出', docs: publishedDocs });
+if (resultDate.escalated) assert.equal(resultDate.escalated, 'AI无法解答');
+else { assert.ok(resultDate.content.includes('10月22日'), resultDate.content); assert.equal(resultDate.sources[0].docId, noticeDoc.id); }
+console.log('PASS: contest prompts first, meeting start and result date without unrelated citations');
