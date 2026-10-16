@@ -98,3 +98,10 @@ const metrics = dashboardMetrics([
 ], now);
 assert.equal(metrics.today, 1); assert.equal(metrics.aiRate, 50); assert.equal(metrics.pending, 1); assert.equal(metrics.readRate, 75);
 console.log('PASS: ticket→FAQ→same question with source; dashboard time windows and audience read ratios');
+
+const { readFileSync } = await import('node:fs');
+for (const doc of SEED_DOCS) {
+  const reference = new URL(`../hermes/skills/tuanxue-assistant/references/${doc.id}.md`, import.meta.url);
+  assert.equal(readFileSync(reference, 'utf8'), doc.content, `Hermes reference drift: ${doc.id}`);
+}
+console.log('PASS: 5 Hermes reference files exactly match frontend seed text');

@@ -202,3 +202,33 @@ Chromium，管理端 1366×768、学生端 375×740，同一浏览器上下文�
 - npm run build、npm test 通过；grep -c tencentyun package-lock.json 为 0；没有 .npmrc、真实密钥或构建产物入库。
 - 第 4 步配置和第 5 步模型接入尚未执行，仍为离线 Demo。
 - UI 主包约 1.40 MB/gzip 453 kB，mammoth 分包约 311 kB；构建有非阻断体积提示。
+
+## step4-files：Hermes 文件交付（未执行配置）
+
+### 已编写
+
+- hermes/skills/tuanxue-assistant/SKILL.md：包含 name、description、version、metadata.hermes.tags，When to Use / Procedure / Pitfalls / Verification，五分类、出处与转人工标记、三组示例。个人核实条件与 step2-fix 对齐。
+- hermes/SOUL.md：专用团学人设，先加载技能、只据资料、示例声明、人工分流和工具边界。
+- scripts/export-references.mjs：直接加载 src/data/seed.ts 导出 5 份正文；--check 逐字比较且不写文件。导出结果已入库，npm test 也逐字核验五份内容。
+- hermes/setup.sh：set -euo pipefail；已存在 profile 跳过创建；使用 --clone 复用模型配置；只清除专用 profile 两份个人记忆；首次备份克隆 skills，关闭自动灌入，复制本技能和 SOUL；随机 API Server Key、127.0.0.1:8643、skills 工具集；写被忽略的 .env.local 并设置权限 600；仅打印 nohup 和 curl 下一步。
+- 重复执行保留 skills.cloned-bak，但会轮换 API Server Key；README 说明需重启旧网关。profile 创建为顶层命令，其他 profile 操作均显式使用 hermes -p tuanxue。
+- hermes/README.md：本机核对、导出/检查、手动安装、启动、health/models 和问答验证步骤。
+
+### 实际核对与验证限制
+
+已尝试要求的三个帮助命令：
+
+```text
+hermes --help
+hermes profile create --help
+hermes config set --help
+```
+
+三者均退出 127：`/usr/local/bin/hermes` 指向的 `/home/ubuntu/.hermes/hermes-agent/venv/bin/hermes` 不存在。因此 --clone、skills opt-out、config set 对 API_SERVER_* 和 JSON 列表的处理尚未核对；setup.sh 开头有明确注释，需用户在真实机器审核。没有尝试安装或修复 Hermes，没有读取真实配置。
+
+- bash -n hermes/setup.sh 通过，只做语法解析，未运行脚本。
+- 五份参考文件导出成功，--check 与 npm test 逐字比较通过。
+- Hermes frontmatter 经 YAML 解析与必需字段/章节检查通过。Codex 的 quick_validate.py 不接受顶层 version，故不能直接用于 Hermes 格式；保留用户要求的 Hermes version 字段，没有为了通过 Codex 校验而删除它。
+- 本次未创建/修改任何 Hermes profile，未生成真实 API Key，未写 .env.local，未启动 gateway，未请求 /health 或 /v1/models。真实 API 运行验收待用户手动进行。
+- npm run build、npm test 均通过；grep -c tencentyun package-lock.json 为 0。
+- 第 5 步代理、流式接入和模式切换未开始。
