@@ -57,6 +57,7 @@ export default function StudentLayout() {
             return (
               <button
                 type="button"
+                aria-label={tab.title}
                 aria-current={active ? 'page' : undefined}
                 key={tab.key}
                 onClick={() => navigate(`/student/${tab.key}`)}

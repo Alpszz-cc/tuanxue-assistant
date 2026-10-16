@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { MOCK_STUDENTS, MOCK_ADMINS } from '../types';
 import type { KbDoc, Notice, ChatMessage, Ticket, QaLog, MockUser } from '../types';
+import type { AnswerResult } from '../lib/answerEngine';
 import { SEED_DOCS, SEED_NOTICES, SEED_TICKETS, SEED_QALOGS } from '../data/seed';
 
 interface DemoData {
@@ -18,6 +19,12 @@ interface TxzsState extends DemoData {
   login: (user: MockUser) => void;
   logout: () => void;
   resetDemoData: () => void;
+  addQuestion: (studentId: string, message: ChatMessage) => void;
+  finishAnswer: (student: MockUser, question: string, reply: AnswerResult) => string;
+  escalateMessage: (student: MockUser, messageId: string, question: string) => void;
+  feedback: (studentId: string, messageId: string, value: 'up' | 'down') => void;
+  markNoticeRead: (noticeId: string, studentId: string) => void;
+  markTicketSeen: (ticketId: string, studentId: string) => void;
 }
 function freshSeed(): DemoData {
   return {
@@ -41,12 +48,52 @@ function initialUser(): MockUser | null {
 export const STORAGE_KEY = 'txzs_tuanxue';
 export const useStore = create<TxzsState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...freshSeed(),
       currentUser: initialUser(),
       login: (user) => { sessionStorage.setItem(IDENTITY_KEY, user.id); set({ currentUser: user }); },
       logout: () => { sessionStorage.removeItem(IDENTITY_KEY); set({ currentUser: null }); },
       resetDemoData: () => set(freshSeed()),
+      addQuestion: (studentId, message) => set((state) => ({ chats: { ...state.chats,
+        [studentId]: [...(state.chats[studentId] ?? []), message] } })),
+      finishAnswer: (student, question, reply) => {
+        const id = crypto.randomUUID();
+        const ticketId = reply.escalated ? crypto.randomUUID() : undefined;
+        const createdAt = Date.now();
+        // 回复、工单和咨询日志一次写入，避免跨窗口看到不一致的中间状态。
+        set((state) => ({
+          chats: { ...state.chats, [student.id]: [...(state.chats[student.id] ?? []),
+            { id, role: 'assistant', content: reply.content, sources: reply.sources,
+              escalated: reply.escalated, ticketId, createdAt }] },
+          tickets: ticketId && reply.escalated ? [{ id: ticketId, studentId: student.id,
+            studentName: student.name, question, aiAnswer: reply.content, category: reply.category,
+            reason: reply.escalated, status: '待处理', createdAt }, ...state.tickets] : state.tickets,
+          qaLogs: [...state.qaLogs, { id, studentId: student.id, question, category: reply.category,
+            resolvedByAI: !reply.escalated, createdAt }],
+        }));
+        return id;
+      },
+      escalateMessage: (student, messageId, question) => {
+        const message = get().chats[student.id]?.find((item) => item.id === messageId);
+        if (!message || message.ticketId) return;
+        const ticketId = crypto.randomUUID();
+        set((state) => ({
+          chats: { ...state.chats, [student.id]: state.chats[student.id].map((item) => item.id === messageId
+            ? { ...item, ticketId, escalated: '学生申请人工' } : item) },
+          tickets: [{ id: ticketId, studentId: student.id, studentName: student.name,
+            question, aiAnswer: message.content, category: state.qaLogs.find((log) => log.id === messageId)?.category ?? '其他',
+            reason: '学生申请人工', status: '待处理', createdAt: Date.now() }, ...state.tickets],
+          qaLogs: state.qaLogs.map((log) => log.id === messageId ? { ...log, resolvedByAI: false } : log),
+        }));
+      },
+      feedback: (studentId, messageId, value) => set((state) => ({ chats: { ...state.chats,
+        [studentId]: (state.chats[studentId] ?? []).map((item) => item.id === messageId
+          ? { ...item, feedback: item.feedback === value ? undefined : value } : item) } })),
+      markNoticeRead: (noticeId, studentId) => set((state) => ({ notices: state.notices.map((item) =>
+        item.id === noticeId && !item.readBy.includes(studentId)
+          ? { ...item, readBy: [...item.readBy, studentId] } : item) })),
+      markTicketSeen: (ticketId, studentId) => set((state) => ({ tickets: state.tickets.map((item) =>
+        item.id === ticketId && item.studentId === studentId ? { ...item, studentSeen: true } : item) })),
     }),
     {
       name: STORAGE_KEY,

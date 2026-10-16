@@ -37,3 +37,24 @@ body {
   flex: 1;
   overflow-y: auto;
 }
+
+* { box-sizing: border-box; }
+.student-page, .chat-page { padding: 16px; overflow-wrap: anywhere; }
+.student-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 8px; }
+.student-heading h4 { margin: 0 0 4px; }
+.recommendations { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin: 20px 0; }
+.recommendations > * { min-width: 0; }
+.recommendations .ant-prompts-item { padding: 10px; }
+.chat-bubbles { overflow: visible; max-height: none; }
+.chat-bubbles .ant-bubble-list-scroll-box { overflow: visible; }
+.answer-footer { max-width: 100%; }
+.answer-footer .ant-actions { flex-wrap: wrap; }
+.chat-sender { position: sticky; bottom: 0; padding: 12px 0 8px; background: #fff; z-index: 2; margin-top: 20px; }
+.demo-caption { font-size: 11px; color: #888; text-align: center; padding-top: 8px; }
+.notice-title { display: block; white-space: normal; height: auto; text-align: left; padding: 10px 0; width: 100%; }
+.plain-content { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 16px; }
+.student-shell > :last-child { flex-shrink: 0; }
+@media (max-width: 380px) { .recommendations { grid-template-columns: minmax(0, 1fr); } }
+
+.answer-footer .ant-actions-list { flex-wrap: wrap; gap: 2px; }
+.source-excerpt { padding: 10px 0; font-size: 12px; }
